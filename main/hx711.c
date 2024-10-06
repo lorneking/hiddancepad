@@ -2,6 +2,7 @@
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "hx711.h"
 
 #define TAG "HX711"
@@ -11,7 +12,7 @@
 #define digitalRead(pin) gpio_get_level(pin)
 #define pinMode(pin, mode) gpio_set_direction(pin, mode)
 #define delay(ms) vTaskDelay(pdMS_TO_TICKS(ms))
-#define delayMicroseconds(us) vTaskDelay(pdMS_TO_TICKS(us/1000))
+#define delayMicroseconds(us) esp_rom_delay_us(us)  // Use ESP32 ROM delay function
 
 // Initialize the HX711
 void hx711_init(HX711 *hx711, gpio_num_t dout, gpio_num_t pd_sck, uint8_t gain) {
@@ -26,6 +27,10 @@ void hx711_init(HX711 *hx711, gpio_num_t dout, gpio_num_t pd_sck, uint8_t gain) 
 
 // Check if HX711 is ready
 bool hx711_is_ready(HX711 *hx711) {
+    if (hx711 == NULL) {
+        ESP_LOGE(TAG, "hx711 pointer is NULL");
+        return false;
+    }
     return digitalRead(hx711->DOUT) == 0;
 }
 
@@ -34,40 +39,49 @@ void hx711_set_gain(HX711 *hx711, uint8_t gain) {
     switch (gain) {
         case 128:
             hx711->GAIN = GAIN_128;
+            ESP_LOGI(TAG, "Gain set to 128x");
             break;
         case 64:
             hx711->GAIN = GAIN_64;
+            ESP_LOGI(TAG, "Gain set to 64x");
             break;
         case 32:
             hx711->GAIN = GAIN_32;
+            ESP_LOGI(TAG, "Gain set to 32x");
+            break;
+        default:
+            ESP_LOGE(TAG, "Invalid gain value");
             break;
     }
 }
 
+// Read data from HX711
 long hx711_read(HX711 *hx711) {
     if (hx711 == NULL) {
         ESP_LOGE(TAG, "hx711 pointer is NULL");
         return -1;
     }
 
-    hx711_wait_ready(hx711, 1);
+    hx711_wait_ready(hx711, 0);
 
-    unsigned long value = 0;
+    uint32_t value = 0;
     uint8_t data[3] = {0};
-    uint8_t filler = 0x00;
+    int32_t filler = 0x00;
 
     portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
     portENTER_CRITICAL(&mux);
 
     ESP_LOGD(TAG, "Reading data from HX711");
 
+    // Read 24 bits of data from the HX711
     data[2] = hx711_shift_in_slow(hx711->DOUT, hx711->PD_SCK, MSBFIRST);
     data[1] = hx711_shift_in_slow(hx711->DOUT, hx711->PD_SCK, MSBFIRST);
     data[0] = hx711_shift_in_slow(hx711->DOUT, hx711->PD_SCK, MSBFIRST);
 
-    // Debug prints to verify data read
+    // Debug print to verify data read
     ESP_LOGD(TAG, "Data read: %02x %02x %02x", data[2], data[1], data[0]);
 
+    // Set gain for the next reading by clocking the device
     for (unsigned int i = 0; i < hx711->GAIN; i++) {
         digitalWrite(hx711->PD_SCK, 1);
         delayMicroseconds(1);
@@ -77,19 +91,21 @@ long hx711_read(HX711 *hx711) {
 
     portEXIT_CRITICAL(&mux);
 
+    // Perform sign extension for the 24-bit signed value
     if (data[2] & 0x80) {
-        filler = 0xFF;
+        filler = 0xFF;  // Extend sign for negative values
     } else {
         filler = 0x00;
     }
 
-    value = ((unsigned long)filler << 24
-            | (unsigned long)data[2] << 16
-            | (unsigned long)data[1] << 8
-            | (unsigned long)data[0]);
+    // Combine the 24-bit data into a signed 32-bit integer
+    value = ((uint32_t)filler << 24
+            | (uint32_t)data[2] << 16
+            | (uint32_t)data[1] << 8
+            | (uint32_t)data[0]);
 
-    // Debug print to verify the final value
-    ESP_LOGD(TAG, "Raw value: %ld", value);
+    // Cast value to signed long
+    // ESP_LOGI(TAG, "Raw value: %ld", (long)value);
 
     return (long)value;
 }
@@ -97,8 +113,10 @@ long hx711_read(HX711 *hx711) {
 // Wait for HX711 to be ready
 void hx711_wait_ready(HX711 *hx711, unsigned long delay_ms) {
     while (!hx711_is_ready(hx711)) {
+        // ESP_LOGW(TAG, "HX711 not ready, waiting...");
         delay(delay_ms);
     }
+    // ESP_LOGI(TAG, "HX711 is ready");
 }
 
 // Retry waiting for HX711 to be ready

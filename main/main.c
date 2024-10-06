@@ -13,7 +13,7 @@
 #include "esp_event.h"
 #include "esp_task_wdt.h"
 
-#define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
+// #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
 static const char *TAG = "MAIN";
 
 // Define GPIO Pins
@@ -46,7 +46,7 @@ long prevWeight1, prevWeight2, prevWeight3, prevWeight4;
  */
 const uint8_t hid_report_descriptor[] = {
     TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(HID_ITF_PROTOCOL_KEYBOARD)),
-    TUD_HID_REPORT_DESC_MOUSE(HID_REPORT_ID(HID_ITF_PROTOCOL_MOUSE))
+//    TUD_HID_REPORT_DESC_MOUSE(HID_REPORT_ID(HID_ITF_PROTOCOL_MOUSE))
 };
 
 /**
@@ -154,16 +154,16 @@ static void app_send_hid_keypress(uint8_t keycode)
     ESP_LOGI(TAG, "Sending Keyboard report");
     uint8_t keycode_buf[6] = {keycode};
     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, keycode_buf);
-    vTaskDelay(pdMS_TO_TICKS(50));
+    vTaskDelay(pdMS_TO_TICKS(13));
     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
 }
 
-static void app_send_mouse_move(int8_t delta_x, int8_t delta_y)
-{
-    ESP_LOGI(TAG, "Sending Mouse report");
-    tud_hid_mouse_report(HID_ITF_PROTOCOL_MOUSE, 0x00, delta_x, delta_y, 0, 0);
-    vTaskDelay(pdMS_TO_TICKS(20));
-}
+//static void app_send_mouse_move(int8_t delta_x, int8_t delta_y)
+//{
+//     ESP_LOGI(TAG, "Sending Mouse report");
+//     tud_hid_mouse_report(HID_ITF_PROTOCOL_MOUSE, 0x00, delta_x, delta_y, 0, 0);
+//     vTaskDelay(pdMS_TO_TICKS(20));
+// }
 
 void hx711_task(void *pvParameter) {
 
@@ -194,6 +194,12 @@ void hx711_task(void *pvParameter) {
     // hx711_init(&scale4, HX711_4_DT, HX711_SCK, 32);
     /* End 32x amplification */
 
+    // Tare the scales after initialization
+    hx711_tare(&scale1, 10);
+    hx711_tare(&scale2, 10);
+    hx711_tare(&scale3, 10);
+    hx711_tare(&scale4, 10);
+
     static bool send_hid_data = false;
 
     while (1) {      
@@ -203,68 +209,64 @@ void hx711_task(void *pvParameter) {
         long weight3 = hx711_read(&scale3);
         long weight4 = hx711_read(&scale4);
 
+        // ESP_LOGI(TAG, "Weight 1: %ld", weight1);
+        // ESP_LOGI(TAG, "Weight 2: %ld", weight2);
+        // ESP_LOGI(TAG, "Weight 3: %ld", weight3);
+        // ESP_LOGI(TAG, "Weight 4: %ld", weight4);
+
         if (tud_mounted()) {
             send_hid_data = true;
         }
 
-        if (weight1 != -1) { 
-            if ((weight1 - threshold) > prevWeight1) {    
-                gpio_set_level(LED_1_GATE, 1);
-                ESP_LOGI(TAG, "Pad 1 step detected");
-                if (send_hid_data) {
-                    app_send_hid_keypress(HID_KEY_ARROW_UP);
-                }
-            } else {  
-                gpio_set_level(LED_1_GATE, 0);
+         if (weight1 != -1 && (weight1 - threshold) > prevWeight1) {
+            gpio_set_level(LED_1_GATE, 1);
+            ESP_LOGI(TAG, "Pad 1 step detected");
+            if (send_hid_data) {
+                app_send_hid_keypress(HID_KEY_ARROW_UP);
             }
-            prevWeight1 = weight1;
+        } else {
+            gpio_set_level(LED_1_GATE, 0);
         }
-        
-        if (weight2 != -1) { 
-            if ((weight2 - threshold) > prevWeight2) {    
-                gpio_set_level(LED_2_GATE, 1);
-                ESP_LOGI(TAG, "Pad 2 step detected");
-                if (send_hid_data) {
-                    app_send_hid_keypress(HID_KEY_ARROW_DOWN);
-                }  
-            } else {   
-                gpio_set_level(LED_2_GATE, 0);
-            }
-            prevWeight2 = weight2;
-        }
+        prevWeight1 = weight1;
 
-        if (weight3 != -1) { 
-            if ((weight3 - threshold) > prevWeight3) {
-                gpio_set_level(LED_3_GATE, 1);
-                ESP_LOGI(TAG, "Pad 3 step detected");
-                if (send_hid_data) {
-                    app_send_hid_keypress(HID_KEY_ARROW_LEFT);
-                }   
-            } else {   
-                gpio_set_level(LED_3_GATE, 0);
+        if (weight2 != -1 && (weight2 - threshold) > prevWeight2) {
+            gpio_set_level(LED_2_GATE, 1);
+            ESP_LOGI(TAG, "Pad 2 step detected");
+            if (send_hid_data) {
+                app_send_hid_keypress(HID_KEY_ARROW_DOWN);
             }
-            prevWeight3 = weight3;
+        } else {
+            gpio_set_level(LED_2_GATE, 0);
         }
+        prevWeight2 = weight2;
 
-        if (weight4 != -1) { 
-            if ((weight4 - threshold) > prevWeight4) {   
-                gpio_set_level(LED_4_GATE, 1);
-                ESP_LOGI(TAG, "Pad 4 step detected");
-                if (send_hid_data) {
-                    app_send_hid_keypress(HID_KEY_ARROW_RIGHT);
-                } 
-            } else { 
-                gpio_set_level(LED_4_GATE, 0);
+        if (weight3 != -1 && (weight3 - threshold) > prevWeight3) {
+            gpio_set_level(LED_3_GATE, 1);
+            ESP_LOGI(TAG, "Pad 3 step detected");
+            if (send_hid_data) {
+                app_send_hid_keypress(HID_KEY_ARROW_LEFT);
             }
-            prevWeight4 = weight4;
+        } else {
+            gpio_set_level(LED_3_GATE, 0);
         }
+        prevWeight3 = weight3;
 
-        vTaskDelay(pdMS_TO_TICKS(12)); // Delay for 12ms = 80Hz sample rate from HX711
+        if (weight4 != -1 && (weight4 - threshold) > prevWeight4) {
+            gpio_set_level(LED_4_GATE, 1);
+            ESP_LOGI(TAG, "Pad 4 step detected");
+            if (send_hid_data) {
+                app_send_hid_keypress(HID_KEY_ARROW_RIGHT);
+            }
+        } else {
+            gpio_set_level(LED_4_GATE, 0);
+        }
+        prevWeight4 = weight4;
+
+        // Delay to match the HX711 sample rate (80Hz = 12.5ms per sample)
+        vTaskDelay(pdMS_TO_TICKS(13));
 
         send_hid_data = ((weight1 - threshold) > prevWeight1) || ((weight2 - threshold) > prevWeight2) || ((weight3 - threshold) > prevWeight3) || ((weight4 - threshold) > prevWeight4);
-
     }
-    
 }
 
 void app_main(void)
@@ -317,10 +319,8 @@ void app_main(void)
     init_gpio(LED_3_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
     init_gpio(LED_4_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
 
-    esp_log_level_set("wifi", ESP_LOG_VERBOSE);
-    ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
-
     // Initialize HX711 task to read load cell values
-    xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+    // xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+    xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, 5, NULL);
 
 }
