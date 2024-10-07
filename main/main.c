@@ -6,26 +6,39 @@
 #include "tinyusb.h"
 #include "class/hid/hid_device.h"
 #include "driver/gpio.h"
-#include "gpio.h"
+#include "gpio_control.h"
 #include "hx711.h"
 #include "wifi.h"
 #include "web_server.h"
 #include "esp_event.h"
 #include "esp_task_wdt.h"
+#include "serial_prompt.h"
+#include "FreeRTOSConfig.h"
+#include "hid_control.h"
 
 // #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
 static const char *TAG = "MAIN";
 
 // Define GPIO Pins
-#define HX711_SCK GPIO_NUM_8 // Common clock pin for all HX711s
-#define HX711_1_DT GPIO_NUM_4 // Data pin for HX711 1
-#define HX711_2_DT GPIO_NUM_5 // Data pin for HX711 2
-#define HX711_3_DT GPIO_NUM_6 // Data pin for HX711 3
-#define HX711_4_DT GPIO_NUM_7 // Data pin for HX711 4
-#define LED_1_GATE GPIO_NUM_35 // Gate for LED 1
-#define LED_2_GATE GPIO_NUM_36 // Gate for LED 2
-#define LED_3_GATE GPIO_NUM_37 // Gate for LED 3
-#define LED_4_GATE GPIO_NUM_38 // Gate for LED 4
+#define HX711_SCK       GPIO_NUM_8 // Common clock pin for all HX711s
+#define HX711_1_DT      GPIO_NUM_4 // Data pin for HX711 1
+#define HX711_2_DT      GPIO_NUM_5 // Data pin for HX711 2
+#define HX711_3_DT      GPIO_NUM_6 // Data pin for HX711 3
+#define HX711_4_DT      GPIO_NUM_7 // Data pin for HX711 4
+#define LED_1_GATE      GPIO_NUM_35 // Gate for LED 1
+#define LED_2_GATE      GPIO_NUM_36 // Gate for LED 2
+#define LED_3_GATE      GPIO_NUM_37 // Gate for LED 3
+#define LED_4_GATE      GPIO_NUM_38 // Gate for LED 4
+
+#define DOWN_ARROW_LED  LED_1_GATE // DOWN ARROW is LED/HX711 1
+#define RIGHT_ARROW     LED_2_GATE // RIGHT ARROW is LED/HX711 2
+#define UP_ARROW        LED_3_GATE // UP ARROW is LED/HX711 3
+#define LEFT_ARROW      LED_4_GATE // LEFT ARROW is LED/HX711 4
+
+#define DOWN_ARROW_HX711  HX711_1_DT // DOWN ARROW is LED/HX711 1
+#define RIGHT_ARROW_HX711 HX711_2_DT // RIGHT ARROW is LED/HX711 2
+#define UP_ARROW_HX711    HX711_3_DT // UP ARROW is LED/HX711 3
+#define LEFT_ARROW_HX711  HX711_4_DT // LEFT ARROW is LED/HX711 4
 
 // Define threshold values
 long threshold = 10000; // Delta threshold for pad step detection
@@ -106,57 +119,58 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 
 /********* Application ***************/
 
-typedef enum {
-    MOUSE_DIR_RIGHT,
-    MOUSE_DIR_DOWN,
-    MOUSE_DIR_LEFT,
-    MOUSE_DIR_UP,
-    MOUSE_DIR_MAX,
-} mouse_dir_t;
+// typedef enum {
+//     MOUSE_DIR_RIGHT,
+//     MOUSE_DIR_DOWN,
+//     MOUSE_DIR_DOWN,
+//     MOUSE_DIR_LEFT,
+//     MOUSE_DIR_UP,
+//     MOUSE_DIR_MAX,
+// } mouse_dir_t;
 
-#define DISTANCE_MAX        125
-#define DELTA_SCALAR        5
+// #define DISTANCE_MAX        125
+// #define DELTA_SCALAR        5
 
-static void mouse_draw_square_next_delta(int8_t *delta_x_ret, int8_t *delta_y_ret)
-{
-    static mouse_dir_t cur_dir = MOUSE_DIR_RIGHT;
-    static uint32_t distance = 0;
+// static void mouse_draw_square_next_delta(int8_t *delta_x_ret, int8_t *delta_y_ret)
+// {
+//     static mouse_dir_t cur_dir = MOUSE_DIR_RIGHT;
+//     static uint32_t distance = 0;
 
-    // Calculate next delta
-    if (cur_dir == MOUSE_DIR_RIGHT) {
-        *delta_x_ret = DELTA_SCALAR;
-        *delta_y_ret = 0;
-    } else if (cur_dir == MOUSE_DIR_DOWN) {
-        *delta_x_ret = 0;
-        *delta_y_ret = DELTA_SCALAR;
-    } else if (cur_dir == MOUSE_DIR_LEFT) {
-        *delta_x_ret = -DELTA_SCALAR;
-        *delta_y_ret = 0;
-    } else if (cur_dir == MOUSE_DIR_UP) {
-        *delta_x_ret = 0;
-        *delta_y_ret = -DELTA_SCALAR;
-    }
+//     // Calculate next delta
+//     if (cur_dir == MOUSE_DIR_RIGHT) {
+//         *delta_x_ret = DELTA_SCALAR;
+//         *delta_y_ret = 0;
+//     } else if (cur_dir == MOUSE_DIR_DOWN) {
+//         *delta_x_ret = 0;
+//         *delta_y_ret = DELTA_SCALAR;
+//     } else if (cur_dir == MOUSE_DIR_LEFT) {
+//         *delta_x_ret = -DELTA_SCALAR;
+//         *delta_y_ret = 0;
+//     } else if (cur_dir == MOUSE_DIR_UP) {
+//         *delta_x_ret = 0;
+//         *delta_y_ret = -DELTA_SCALAR;
+//     }
 
-    // Update cumulative distance for current direction
-    distance += DELTA_SCALAR;
-    // Check if we need to change direction
-    if (distance >= DISTANCE_MAX) {
-        distance = 0;
-        cur_dir++;
-        if (cur_dir == MOUSE_DIR_MAX) {
-            cur_dir = 0;
-        }
-    }
-}
+//     // Update cumulative distance for current direction
+//     distance += DELTA_SCALAR;
+//     // Check if we need to change direction
+//     if (distance >= DISTANCE_MAX) {
+//         distance = 0;
+//         cur_dir++;
+//         if (cur_dir == MOUSE_DIR_MAX) {
+//             cur_dir = 0;
+//         }
+//     }
+// }
 
-static void app_send_hid_keypress(uint8_t keycode)
-{
-    ESP_LOGI(TAG, "Sending Keyboard report");
-    uint8_t keycode_buf[6] = {keycode};
-    tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, keycode_buf);
-    vTaskDelay(pdMS_TO_TICKS(13));
-    tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
-}
+// static void app_send_hid_keypress(uint8_t keycode)
+// {
+//     ESP_LOGI(TAG, "Sending Keyboard report");
+//     uint8_t keycode_buf[6] = {keycode};
+//     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, keycode_buf);
+//     vTaskDelay(pdMS_TO_TICKS(13));
+//     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
+// }
 
 //static void app_send_mouse_move(int8_t delta_x, int8_t delta_y)
 //{
@@ -181,10 +195,10 @@ void hx711_task(void *pvParameter) {
     /* End 128x amplification */
 
     /* Begin 64x amplification */
-    hx711_init(&scale1, HX711_1_DT, HX711_SCK, 64);
-    hx711_init(&scale2, HX711_2_DT, HX711_SCK, 64);
-    hx711_init(&scale3, HX711_3_DT, HX711_SCK, 64);
-    hx711_init(&scale4, HX711_4_DT, HX711_SCK, 64);
+    hx711_init(&scale1, DOWN_ARROW_HX711, HX711_SCK, 64);
+    hx711_init(&scale2, RIGHT_ARROW_HX711, HX711_SCK, 64);
+    hx711_init(&scale3, UP_ARROW_HX711, HX711_SCK, 64);
+    hx711_init(&scale4, LEFT_ARROW_HX711, HX711_SCK, 64);
     /* End 64x amplification */
 
     /* Begin 32x amplification */
@@ -222,7 +236,7 @@ void hx711_task(void *pvParameter) {
             gpio_set_level(LED_1_GATE, 1);
             ESP_LOGI(TAG, "Pad 1 step detected");
             if (send_hid_data) {
-                app_send_hid_keypress(HID_KEY_ARROW_UP);
+                send_hid_keypress(HID_KEY_ARROW_UP);
             }
         } else {
             gpio_set_level(LED_1_GATE, 0);
@@ -233,7 +247,7 @@ void hx711_task(void *pvParameter) {
             gpio_set_level(LED_2_GATE, 1);
             ESP_LOGI(TAG, "Pad 2 step detected");
             if (send_hid_data) {
-                app_send_hid_keypress(HID_KEY_ARROW_DOWN);
+                send_hid_keypress(HID_KEY_ARROW_DOWN);
             }
         } else {
             gpio_set_level(LED_2_GATE, 0);
@@ -244,7 +258,7 @@ void hx711_task(void *pvParameter) {
             gpio_set_level(LED_3_GATE, 1);
             ESP_LOGI(TAG, "Pad 3 step detected");
             if (send_hid_data) {
-                app_send_hid_keypress(HID_KEY_ARROW_LEFT);
+                send_hid_keypress(HID_KEY_ARROW_LEFT);
             }
         } else {
             gpio_set_level(LED_3_GATE, 0);
@@ -255,7 +269,7 @@ void hx711_task(void *pvParameter) {
             gpio_set_level(LED_4_GATE, 1);
             ESP_LOGI(TAG, "Pad 4 step detected");
             if (send_hid_data) {
-                app_send_hid_keypress(HID_KEY_ARROW_RIGHT);
+                send_hid_keypress(HID_KEY_ARROW_RIGHT);
             }
         } else {
             gpio_set_level(LED_4_GATE, 0);
@@ -271,8 +285,7 @@ void hx711_task(void *pvParameter) {
 
 void app_main(void)
 {    
-    
-    // Initialize NVS
+       // Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -313,6 +326,9 @@ void app_main(void)
     ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
     ESP_LOGI(TAG, "USB initialization DONE");
 
+    // Initialize UART for serial prompt
+    uart_init();
+
     // Initialize LED driver GPIOs
     init_gpio(LED_1_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
     init_gpio(LED_2_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
@@ -321,6 +337,8 @@ void app_main(void)
 
     // Initialize HX711 task to read load cell values
     // xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
-    xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, 5, NULL);
+
+    xTaskCreate(&serial_prompt_task, "serial_prompt_task", 2048, NULL, 10, NULL);
+    xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
 
 }

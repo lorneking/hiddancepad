@@ -1,6 +1,8 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 
+static const char *TAG = "GPIO Control";
+
 /*
 Initialize GPIO pin
 PIN = GPIO pin to be initialized
