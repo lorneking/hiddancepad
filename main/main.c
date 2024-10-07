@@ -41,7 +41,7 @@ static const char *TAG = "MAIN";
 #define LEFT_ARROW_HX711  HX711_4_DT // LEFT ARROW is LED/HX711 4
 
 // Define threshold values
-long threshold = 10000; // Delta threshold for pad step detection
+long threshold = 14000; // Delta threshold for pad step detection
 //int soundThreshold = 300; TODO: Implement sound threshold for sound-activated LEDs
 
 HX711 scale1, scale2, scale3, scale4;
@@ -214,7 +214,8 @@ void hx711_task(void *pvParameter) {
     hx711_tare(&scale3, 10);
     hx711_tare(&scale4, 10);
 
-    static bool send_hid_data = false;
+    // static bool send_hid_data = false;
+    static bool send_hid_data = true;
 
     while (1) {      
 
@@ -228,11 +229,11 @@ void hx711_task(void *pvParameter) {
         // ESP_LOGI(TAG, "Weight 3: %ld", weight3);
         // ESP_LOGI(TAG, "Weight 4: %ld", weight4);
 
-        if (tud_mounted()) {
-            send_hid_data = true;
-        }
+        // if (tud_mounted()) {
+        //     send_hid_data = true;
+        // }
 
-         if (weight1 != -1 && (weight1 - threshold) > prevWeight1) {
+        if (weight1 != -1 && (weight1 - threshold) > prevWeight1) {
             gpio_set_level(LED_1_GATE, 1);
             ESP_LOGI(TAG, "Pad 1 step detected");
             if (send_hid_data) {
@@ -279,13 +280,14 @@ void hx711_task(void *pvParameter) {
         // Delay to match the HX711 sample rate (80Hz = 12.5ms per sample)
         vTaskDelay(pdMS_TO_TICKS(13));
 
-        send_hid_data = ((weight1 - threshold) > prevWeight1) || ((weight2 - threshold) > prevWeight2) || ((weight3 - threshold) > prevWeight3) || ((weight4 - threshold) > prevWeight4);
+        // send_hid_data = ((weight1 - threshold) > prevWeight1) || ((weight2 - threshold) > prevWeight2) || ((weight3 - threshold) > prevWeight3) || ((weight4 - threshold) > prevWeight4);
+        // send_hid_data = tud_mounted();
     }
 }
 
 void app_main(void)
 {    
-       // Initialize NVS
+    // Initialize NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
