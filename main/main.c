@@ -15,6 +15,7 @@
 #include "serial_prompt.h"
 #include "FreeRTOSConfig.h"
 #include "hid_control.h"
+#include "touchpad.h"
 
 // #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
 static const char *TAG = "MAIN";
@@ -340,7 +341,69 @@ void app_main(void)
     // Initialize HX711 task to read load cell values
     // xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
 
-    xTaskCreate(&serial_prompt_task, "serial_prompt_task", 2048, NULL, 10, NULL);
-    xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+    // xTaskCreate(&serial_prompt_task, "serial_prompt_task", 2048, NULL, 10, NULL);
+    // xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+ if (que_touch == NULL) {
+        que_touch = xQueueCreate(TOUCH_BUTTON_NUM, sizeof(touch_event_t));
+    }
+    // Initialize touch pad peripheral, it will start a timer to run a filter
+    ESP_LOGI(TAG, "Initializing touch pad");
+    /* Initialize touch pad peripheral. */
+    touch_pad_init();
+    for (int i = 0; i < TOUCH_BUTTON_NUM; i++) {
+        touch_pad_config(button[i]);
+    }
+
+#if TOUCH_CHANGE_CONFIG
+    /* If you want to change the touch sensor default setting, please write here (after initialization). */
+    touch_pad_set_measurement_interval(TOUCH_PAD_SLEEP_CYCLE_DEFAULT);
+    touch_pad_set_charge_discharge_times(TOUCH_PAD_MEASURE_CYCLE_DEFAULT);
+    touch_pad_set_voltage(TOUCH_PAD_HIGH_VOLTAGE_THRESHOLD, TOUCH_PAD_LOW_VOLTAGE_THRESHOLD, TOUCH_PAD_ATTEN_VOLTAGE_THRESHOLD);
+    touch_pad_set_idle_channel_connect(TOUCH_PAD_IDLE_CH_CONNECT_DEFAULT);
+    for (int i = 0; i < TOUCH_BUTTON_NUM; i++) {
+        touch_pad_set_cnt_mode(button[i], TOUCH_PAD_SLOPE_DEFAULT, TOUCH_PAD_TIE_OPT_DEFAULT);
+    }
+#endif
+
+#if TOUCH_BUTTON_DENOISE_ENABLE
+    /* Denoise setting at TouchSensor 0. */
+    touch_pad_denoise_t denoise = {
+        /* The bits to be canceled are determined according to the noise level. */
+        .grade = TOUCH_PAD_DENOISE_BIT4,
+        /* By adjusting the parameters, the reading of T0 should be approximated to the reading of the measured channel. */
+        .cap_level = TOUCH_PAD_DENOISE_CAP_L4,
+    };
+    touch_pad_denoise_set_config(&denoise);
+    touch_pad_denoise_enable();
+    ESP_LOGI(TAG, "Denoise function init");
+#endif
+
+#if TOUCH_BUTTON_WATERPROOF_ENABLE
+    /* Waterproof function */
+    touch_pad_waterproof_t waterproof = {
+        .guard_ring_pad = button[3],   // If no ring pad, set 0;
+        /* Estimate the size of the parasitic capacitance on T14 and set appropriate hardware parameters. */
+        .shield_driver = TOUCH_PAD_SHIELD_DRV_L2,
+    };
+    touch_pad_waterproof_set_config(&waterproof);
+    touch_pad_waterproof_enable();
+    ESP_LOGI(TAG, "touch pad waterproof init");
+#endif
+
+    /* Filter setting */
+    touchsensor_filter_set(TOUCH_PAD_FILTER_IIR_16);
+    touch_pad_timeout_set(true, TOUCH_PAD_THRESHOLD_MAX);
+    /* Register touch interrupt ISR, enable intr type. */
+    touch_pad_isr_register(touchsensor_interrupt_cb, NULL, TOUCH_PAD_INTR_MASK_ALL);
+    /* If you have other touch algorithms, get the measured value after the `TOUCH_PAD_INTR_MASK_SCAN_DONE` interrupt is generated. */
+    touch_pad_intr_enable(TOUCH_PAD_INTR_MASK_ACTIVE | TOUCH_PAD_INTR_MASK_INACTIVE | TOUCH_PAD_INTR_MASK_TIMEOUT);
+
+    /* Enable touch sensor clock. Work mode is "timer trigger". */
+    touch_pad_set_fsm_mode(TOUCH_FSM_MODE_TIMER);
+    touch_pad_fsm_start();
+
+    // Start a task to show what pads have been touched
+    xTaskCreate(&tp_example_read_task, "touch_pad_read_task", 4096, NULL, 5, NULL);
+
 
 }
