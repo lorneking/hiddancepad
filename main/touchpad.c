@@ -26,10 +26,10 @@ const touch_pad_t button[TOUCH_BUTTON_NUM] = {
 };
 
 const float button_threshold[TOUCH_BUTTON_NUM] = {
-    0.02, // 2%.
-    0.02, // 2%.
-    0.08, // 8%.
-    0.02, // 2%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
 };
 
 void touchsensor_interrupt_cb(void *arg)

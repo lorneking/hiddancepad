@@ -40,6 +40,9 @@ core
 # Ignore kicad backups
 /kicad/hiddancepad/hiddancepad-backups/
 
+# Ignore calibration data
+/calibration_data/
+
 # Ignore sensitive information
 main/wifi_credentials.h
 
