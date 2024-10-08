@@ -7,10 +7,17 @@
 #ifndef TOUCHPAD_H
 #define TOUCHPAD_H
 
+#include <stdio.h>
+#include <inttypes.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "esp_log.h"
 #include "driver/touch_pad.h"
+#include "touchpad.h"
+#include "gpio_control.h"
+#include "config.h"
+#include "pin_defs.h"
 
 #ifdef __cplusplus
 extern "C" {

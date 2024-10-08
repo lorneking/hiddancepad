@@ -9,7 +9,10 @@
 #include "freertos/queue.h"
 #include "esp_log.h"
 #include "driver/touch_pad.h"
-#include "touchpad.h"   // Include the header file
+#include "touchpad.h"
+#include "gpio_control.h"
+#include "config.h"
+#include "pin_defs.h"
 
 static const char *TAG = "Touch pad";
 
@@ -113,6 +116,7 @@ void tp_read_task(void *pvParameter)
         if (ret != pdTRUE) {
             continue;
         }
+
         if (evt.intr_mask & TOUCH_PAD_INTR_MASK_ACTIVE) {
             /* if guard pad be touched, other pads no response. */
             if (evt.pad_num == button[14]) {
@@ -121,6 +125,8 @@ void tp_read_task(void *pvParameter)
             } else {
                 if (guard_mode_flag == 0) {
                     ESP_LOGI(TAG, "TouchSensor [%"PRIu32"] be activated, status mask 0x%"PRIu32"", evt.pad_num, evt.pad_status);
+                    pad_led_on(evt.pad_num);
+                    ESP_LOGI(TAG, "LED ON: 0x%"PRIu32, evt.pad_num);
                 } else {
                     ESP_LOGW(TAG, "In guard mode. No response");
                 }
@@ -134,6 +140,8 @@ void tp_read_task(void *pvParameter)
             } else {
                 if (guard_mode_flag == 0) {
                     ESP_LOGI(TAG, "TouchSensor [%"PRIu32"] be inactivated, status mask 0x%"PRIu32, evt.pad_num, evt.pad_status);
+                    pad_led_off(evt.pad_num);
+                    ESP_LOGI(TAG, "LED OFF: 0x%"PRIu32, evt.pad_num);
                 }
             }
         }
