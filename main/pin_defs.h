@@ -1,11 +1,7 @@
 #include "config.h"
 
 // Define GPIO Pins
-#define HX711_SCK       GPIO_NUM_8 // Common clock pin for all HX711s
-#define HX711_1_DT      GPIO_NUM_4 // Data pin for HX711 1
-#define HX711_2_DT      GPIO_NUM_5 // Data pin for HX711 2
-#define HX711_3_DT      GPIO_NUM_6 // Data pin for HX711 3
-#define HX711_4_DT      GPIO_NUM_7 // Data pin for HX711 4
+
 #define LED_1_GATE      GPIO_NUM_35 // Gate for LED 1
 #define LED_2_GATE      GPIO_NUM_36 // Gate for LED 2
 #define LED_3_GATE      GPIO_NUM_37 // Gate for LED 3
@@ -18,6 +14,11 @@
 
 #if PADS_USE_LOAD_CELLS
 
+#define HX711_SCK       GPIO_NUM_8 // Common clock pin for all HX711s
+#define HX711_1_DT      GPIO_NUM_4 // Data pin for HX711 1
+#define HX711_2_DT      GPIO_NUM_5 // Data pin for HX711 2
+#define HX711_3_DT      GPIO_NUM_6 // Data pin for HX711 3
+#define HX711_4_DT      GPIO_NUM_7 // Data pin for HX711 4
 #define DOWN_ARROW_HX711  HX711_1_DT // DOWN ARROW is LED/HX711 1
 #define RIGHT_ARROW_HX711 HX711_2_DT // RIGHT ARROW is LED/HX711 2
 #define UP_ARROW_HX711    HX711_3_DT // UP ARROW is LED/HX711 3

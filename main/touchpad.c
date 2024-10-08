@@ -13,6 +13,7 @@
 #include "gpio_control.h"
 #include "config.h"
 #include "pin_defs.h"
+#include "hid_control.h"
 
 static const char *TAG = "Touch pad";
 
@@ -126,6 +127,7 @@ void tp_read_task(void *pvParameter)
                 if (guard_mode_flag == 0) {
                     ESP_LOGI(TAG, "TouchSensor [%"PRIu32"] be activated, status mask 0x%"PRIu32"", evt.pad_num, evt.pad_status);
                     pad_led_on(evt.pad_num);
+                    start_hid_keypress(pad_to_keycode(evt.pad_num));
                     ESP_LOGI(TAG, "LED ON: 0x%"PRIu32, evt.pad_num);
                 } else {
                     ESP_LOGW(TAG, "In guard mode. No response");
@@ -141,6 +143,7 @@ void tp_read_task(void *pvParameter)
                 if (guard_mode_flag == 0) {
                     ESP_LOGI(TAG, "TouchSensor [%"PRIu32"] be inactivated, status mask 0x%"PRIu32, evt.pad_num, evt.pad_status);
                     pad_led_off(evt.pad_num);
+                    end_hid_keypress(pad_to_keycode(evt.pad_num));
                     ESP_LOGI(TAG, "LED OFF: 0x%"PRIu32, evt.pad_num);
                 }
             }
