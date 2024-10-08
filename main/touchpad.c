@@ -29,10 +29,10 @@ const touch_pad_t button[TOUCH_BUTTON_NUM] = {
     TOUCH_PAD_NUM1,
     TOUCH_PAD_NUM2,
     TOUCH_PAD_NUM3,
-    TOUCH_PAD_NUM4,
-    TOUCH_PAD_NUM5,
-    TOUCH_PAD_NUM6,
-    TOUCH_PAD_NUM7,
+    TOUCH_PAD_NUM4, // 'UP' arrow
+    TOUCH_PAD_NUM5, // 'LEFT' arrow
+    TOUCH_PAD_NUM6, // 'RIGHT' arrow
+    TOUCH_PAD_NUM7, // 'DOWN' arrow
     TOUCH_PAD_NUM8,
     TOUCH_PAD_NUM9,
     TOUCH_PAD_NUM10,
@@ -46,10 +46,10 @@ const float button_threshold[TOUCH_BUTTON_NUM] = {
     0.2, // 20%.
     0.2, // 20%.
     0.2, // 20%.
-    0.2, // 20%.
-    0.2, // 20%.
-    0.2, // 20%.
-    0.2, // 20%.
+    0.1, // 20%.
+    0.1, // 20%.
+    0.1, // 20%.
+    0.1, // 20%.
     0.2, // 20%.
     0.2, // 20%.
     0.2, // 20%.
@@ -74,7 +74,7 @@ void touchsensor_interrupt_cb(void *arg)
     }
 }
 
-void tp_example_set_thresholds(void)
+void tp_set_thresholds(void)
 {
     uint32_t touch_value;
     for (int i = 0; i < TOUCH_BUTTON_NUM; i++) {
@@ -108,7 +108,7 @@ void tp_read_task(void *pvParameter)
     static uint8_t guard_mode_flag = 0;
     /* Wait touch sensor init done */
     vTaskDelay(50 / portTICK_PERIOD_MS);
-    tp_example_set_thresholds();
+    tp_set_thresholds();
 
     while (1) {
         int ret = xQueueReceive(que_touch, &evt, (TickType_t)portMAX_DELAY);
@@ -117,7 +117,7 @@ void tp_read_task(void *pvParameter)
         }
         if (evt.intr_mask & TOUCH_PAD_INTR_MASK_ACTIVE) {
             /* if guard pad be touched, other pads no response. */
-            if (evt.pad_num == button[3]) {
+            if (evt.pad_num == button[14]) {
                 guard_mode_flag = 1;
                 ESP_LOGW(TAG, "TouchSensor [%"PRIu32"] be activated, enter guard mode", evt.pad_num);
             } else {
@@ -130,7 +130,7 @@ void tp_read_task(void *pvParameter)
         }
         if (evt.intr_mask & TOUCH_PAD_INTR_MASK_INACTIVE) {
             /* if guard pad be touched, other pads no response. */
-            if (evt.pad_num == button[3]) {
+            if (evt.pad_num == button[14]) {
                 guard_mode_flag = 0;
                 ESP_LOGW(TAG, "TouchSensor [%"PRIu32"] be inactivated, exit guard mode", evt.pad_num);
             } else {

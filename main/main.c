@@ -403,8 +403,8 @@ void app_main(void)
     touch_pad_fsm_start();
 
     // Start a task to show what pads have been touched
-    // xTaskCreate(&tp_read_task, "touch_pad_read_task", 4096, NULL, 5, NULL);
-    xTaskCreate(&tp_print_task, "touch_pad_print_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&tp_read_task, "touch_pad_read_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&tp_print_task, "touch_pad_print_task", 4096, NULL, 5, NULL);
 
 
 }

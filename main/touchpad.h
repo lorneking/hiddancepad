@@ -44,7 +44,7 @@ typedef struct touch_msg {
 } touch_event_t;
 
 // Function to set thresholds for touch pads
-void tp_example_set_thresholds(void);
+void tp_set_thresholds(void);
 
 // Function to configure and enable touch pad filters
 void touchsensor_filter_set(touch_filter_mode_t mode);
