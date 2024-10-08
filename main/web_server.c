@@ -1,6 +1,7 @@
 #include "esp_http_server.h"
 #include "esp_log.h"
 #include "hx711.h"
+#include "config.h"
 
 HX711 scaleread1, scaleread2, scaleread3, scaleread4;
 
@@ -11,6 +12,7 @@ esp_err_t hello_get_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+#if PADS_USE_LOAD_CELLS
 // TODO: Refactor this into a single function, pass scales to function
 esp_err_t hx711_get_handler(httpd_req_t *req) {
     long sensor_value1 = hx711_read(&scaleread1);
@@ -25,6 +27,7 @@ esp_err_t hx711_get_handler(httpd_req_t *req) {
     httpd_resp_send(req, resp_str, strlen(resp_str));
     return ESP_OK;
 }
+#endif
 
 void start_webserver(void) {
     ESP_LOGI("WEB", "Starting webserver...");
@@ -39,12 +42,14 @@ void start_webserver(void) {
         };
         httpd_register_uri_handler(server, &uri_get);
 
+        #if PADS_USE_LOAD_CELLS
         httpd_uri_t uri_hx711 = {
             .uri      = "/hx711",
             .method   = HTTP_GET,
             .handler  = hx711_get_handler,
         };
         httpd_register_uri_handler(server, &uri_hx711);
+        #endif
     }
 }
 

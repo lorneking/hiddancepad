@@ -16,37 +16,16 @@
 #include "FreeRTOSConfig.h"
 #include "hid_control.h"
 #include "touchpad.h"
+#include "config.h"
+#include "pin_defs.h"
 
 // #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
 static const char *TAG = "MAIN";
 
-// Define GPIO Pins
-#define HX711_SCK       GPIO_NUM_8 // Common clock pin for all HX711s
-#define HX711_1_DT      GPIO_NUM_4 // Data pin for HX711 1
-#define HX711_2_DT      GPIO_NUM_5 // Data pin for HX711 2
-#define HX711_3_DT      GPIO_NUM_6 // Data pin for HX711 3
-#define HX711_4_DT      GPIO_NUM_7 // Data pin for HX711 4
-#define LED_1_GATE      GPIO_NUM_35 // Gate for LED 1
-#define LED_2_GATE      GPIO_NUM_36 // Gate for LED 2
-#define LED_3_GATE      GPIO_NUM_37 // Gate for LED 3
-#define LED_4_GATE      GPIO_NUM_38 // Gate for LED 4
-
-#define DOWN_ARROW_LED  LED_1_GATE // DOWN ARROW is LED/HX711 1
-#define RIGHT_ARROW     LED_2_GATE // RIGHT ARROW is LED/HX711 2
-#define UP_ARROW        LED_3_GATE // UP ARROW is LED/HX711 3
-#define LEFT_ARROW      LED_4_GATE // LEFT ARROW is LED/HX711 4
-
-#define DOWN_ARROW_HX711  HX711_1_DT // DOWN ARROW is LED/HX711 1
-#define RIGHT_ARROW_HX711 HX711_2_DT // RIGHT ARROW is LED/HX711 2
-#define UP_ARROW_HX711    HX711_3_DT // UP ARROW is LED/HX711 3
-#define LEFT_ARROW_HX711  HX711_4_DT // LEFT ARROW is LED/HX711 4
-
-// Define threshold values
-long threshold = 14000; // Delta threshold for pad step detection
 //int soundThreshold = 300; TODO: Implement sound threshold for sound-activated LEDs
 
-HX711 scale1, scale2, scale3, scale4;
-long prevWeight1, prevWeight2, prevWeight3, prevWeight4;
+// HX711 scale1, scale2, scale3, scale4;
+
 
 /************* TinyUSB descriptors ****************/
 
@@ -179,112 +158,6 @@ void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_
 //     tud_hid_mouse_report(HID_ITF_PROTOCOL_MOUSE, 0x00, delta_x, delta_y, 0, 0);
 //     vTaskDelay(pdMS_TO_TICKS(20));
 // }
-
-void hx711_task(void *pvParameter) {
-
-    /* Initialization of HX711 load cell amplifiers 
-    Uncomment the appropriate section to adjust the sensitivity of the HX711 
-    128 = 128x amplification - smallest measurement range, most noise, most sensitive 
-    64 = 64x amplification - medium measurement range, medium noise, medium sensitivity
-    32 = 32x amplification - widest measurement range, least noise, lowest sensitivity */
-
-    /* Begin 128x amplification */
-    // hx711_init(&scale1, HX711_1_DT, HX711_SCK, 128);
-    // hx711_init(&scale2, HX711_2_DT, HX711_SCK, 128);
-    // hx711_init(&scale3, HX711_3_DT, HX711_SCK, 128);
-    // hx711_init(&scale4, HX711_4_DT, HX711_SCK, 128);
-    /* End 128x amplification */
-
-    /* Begin 64x amplification */
-    hx711_init(&scale1, DOWN_ARROW_HX711, HX711_SCK, 64);
-    hx711_init(&scale2, RIGHT_ARROW_HX711, HX711_SCK, 64);
-    hx711_init(&scale3, UP_ARROW_HX711, HX711_SCK, 64);
-    hx711_init(&scale4, LEFT_ARROW_HX711, HX711_SCK, 64);
-    /* End 64x amplification */
-
-    /* Begin 32x amplification */
-    // hx711_init(&scale1, HX711_1_DT, HX711_SCK, 32);
-    // hx711_init(&scale2, HX711_2_DT, HX711_SCK, 32);
-    // hx711_init(&scale3, HX711_3_DT, HX711_SCK, 32);
-    // hx711_init(&scale4, HX711_4_DT, HX711_SCK, 32);
-    /* End 32x amplification */
-
-    // Tare the scales after initialization
-    hx711_tare(&scale1, 10);
-    hx711_tare(&scale2, 10);
-    hx711_tare(&scale3, 10);
-    hx711_tare(&scale4, 10);
-
-    // static bool send_hid_data = false;
-    static bool send_hid_data = true;
-
-    while (1) {      
-
-        long weight1 = hx711_read(&scale1);
-        long weight2 = hx711_read(&scale2);
-        long weight3 = hx711_read(&scale3);
-        long weight4 = hx711_read(&scale4);
-
-        // ESP_LOGI(TAG, "Weight 1: %ld", weight1);
-        // ESP_LOGI(TAG, "Weight 2: %ld", weight2);
-        // ESP_LOGI(TAG, "Weight 3: %ld", weight3);
-        // ESP_LOGI(TAG, "Weight 4: %ld", weight4);
-
-        // if (tud_mounted()) {
-        //     send_hid_data = true;
-        // }
-
-        if (weight1 != -1 && (weight1 - threshold) > prevWeight1) {
-            gpio_set_level(LED_1_GATE, 1);
-            ESP_LOGI(TAG, "Pad 1 step detected");
-            if (send_hid_data) {
-                send_hid_keypress(HID_KEY_ARROW_UP);
-            }
-        } else {
-            gpio_set_level(LED_1_GATE, 0);
-        }
-        prevWeight1 = weight1;
-
-        if (weight2 != -1 && (weight2 - threshold) > prevWeight2) {
-            gpio_set_level(LED_2_GATE, 1);
-            ESP_LOGI(TAG, "Pad 2 step detected");
-            if (send_hid_data) {
-                send_hid_keypress(HID_KEY_ARROW_DOWN);
-            }
-        } else {
-            gpio_set_level(LED_2_GATE, 0);
-        }
-        prevWeight2 = weight2;
-
-        if (weight3 != -1 && (weight3 - threshold) > prevWeight3) {
-            gpio_set_level(LED_3_GATE, 1);
-            ESP_LOGI(TAG, "Pad 3 step detected");
-            if (send_hid_data) {
-                send_hid_keypress(HID_KEY_ARROW_LEFT);
-            }
-        } else {
-            gpio_set_level(LED_3_GATE, 0);
-        }
-        prevWeight3 = weight3;
-
-        if (weight4 != -1 && (weight4 - threshold) > prevWeight4) {
-            gpio_set_level(LED_4_GATE, 1);
-            ESP_LOGI(TAG, "Pad 4 step detected");
-            if (send_hid_data) {
-                send_hid_keypress(HID_KEY_ARROW_RIGHT);
-            }
-        } else {
-            gpio_set_level(LED_4_GATE, 0);
-        }
-        prevWeight4 = weight4;
-
-        // Delay to match the HX711 sample rate (80Hz = 12.5ms per sample)
-        vTaskDelay(pdMS_TO_TICKS(13));
-
-        // send_hid_data = ((weight1 - threshold) > prevWeight1) || ((weight2 - threshold) > prevWeight2) || ((weight3 - threshold) > prevWeight3) || ((weight4 - threshold) > prevWeight4);
-        // send_hid_data = tud_mounted();
-    }
-}
 
 void app_main(void)
 {    

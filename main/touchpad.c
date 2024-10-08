@@ -1,8 +1,6 @@
-/*
- * SPDX-FileCopyrightText: 2021-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: CC0-1.0
- */
+#include "config.h"
+
+#if PADS_USE_TOUCHPADS
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -232,3 +230,5 @@ void tp_print_task(void *pvParameter)
 //     // Start a task to show what pads have been touched
 //     xTaskCreate(&tp_example_read_task, "touch_pad_read_task", 4096, NULL, 5, NULL);
 // }
+
+#endif // PADS_USE_TOUCHPADS
