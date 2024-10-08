@@ -22,10 +22,6 @@
 // #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
 static const char *TAG = "MAIN";
 
-//int soundThreshold = 300; TODO: Implement sound threshold for sound-activated LEDs
-
-// HX711 scale1, scale2, scale3, scale4;
-
 
 /************* TinyUSB descriptors ****************/
 
@@ -216,6 +212,7 @@ void app_main(void)
 
     // xTaskCreate(&serial_prompt_task, "serial_prompt_task", 2048, NULL, 10, NULL);
     // xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+
  if (que_touch == NULL) {
         que_touch = xQueueCreate(TOUCH_BUTTON_NUM, sizeof(touch_event_t));
     }

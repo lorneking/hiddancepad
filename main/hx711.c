@@ -263,7 +263,6 @@ void hx711_task(void *pvParameter) {
     hx711_tare(&scale3, 10);
     hx711_tare(&scale4, 10);
 
-    // static bool send_hid_data = false;
     static bool send_hid_data = true;
 
     while (1) {      
@@ -329,8 +328,6 @@ void hx711_task(void *pvParameter) {
         // Delay to match the HX711 sample rate (80Hz = 12.5ms per sample)
         vTaskDelay(pdMS_TO_TICKS(13));
 
-        // send_hid_data = ((weight1 - threshold) > prevWeight1) || ((weight2 - threshold) > prevWeight2) || ((weight3 - threshold) > prevWeight3) || ((weight4 - threshold) > prevWeight4);
-        // send_hid_data = tud_mounted();
     }
 }
 

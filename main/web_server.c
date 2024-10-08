@@ -3,8 +3,6 @@
 #include "hx711.h"
 #include "config.h"
 
-HX711 scaleread1, scaleread2, scaleread3, scaleread4;
-
 // HTTP Server Handlers
 esp_err_t hello_get_handler(httpd_req_t *req) {
     const char* resp_str = "Welcome to the DDR Dance Pad Controller!";
@@ -13,6 +11,9 @@ esp_err_t hello_get_handler(httpd_req_t *req) {
 }
 
 #if PADS_USE_LOAD_CELLS
+
+HX711 scaleread1, scaleread2, scaleread3, scaleread4;
+
 // TODO: Refactor this into a single function, pass scales to function
 esp_err_t hx711_get_handler(httpd_req_t *req) {
     long sensor_value1 = hx711_read(&scaleread1);

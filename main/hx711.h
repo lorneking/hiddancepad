@@ -41,6 +41,4 @@ void hx711_power_down(HX711 *hx711);
 void hx711_power_up(HX711 *hx711);
 uint8_t hx711_shift_in_slow(gpio_num_t dataPin, gpio_num_t clockPin, uint8_t bitOrder);
 
-// esp_err_t hx711_get_handler(httpd_req_t *req);
-
 #endif // HX711_H
