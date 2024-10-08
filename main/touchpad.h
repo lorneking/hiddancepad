@@ -17,7 +17,7 @@ extern "C" {
 #endif
 
 // Number of touch buttons
-#define TOUCH_BUTTON_NUM 4
+#define TOUCH_BUTTON_NUM 14
 
 // Enable waterproof and denoise functionality
 #define TOUCH_BUTTON_WATERPROOF_ENABLE 0
@@ -50,7 +50,10 @@ void tp_example_set_thresholds(void);
 void touchsensor_filter_set(touch_filter_mode_t mode);
 
 // Task function for reading touch pad events
-void tp_example_read_task(void *pvParameter);
+void tp_read_task(void *pvParameter);
+
+// Task function for printing touch pad values
+void tp_print_task(void *pvParameter);
 
 // Callback function for touch sensor interrupt handling
 void touchsensor_interrupt_cb(void *arg);

@@ -17,12 +17,29 @@ static const char *TAG = "Touch pad";
 
 QueueHandle_t que_touch = NULL;  // Declare the global variable for the touch event queue
 
-// Define touch pad used and list corresponding buttons
+// // Define touch pad used and list corresponding buttons
+// const touch_pad_t button[TOUCH_BUTTON_NUM] = {
+//     TOUCH_PAD_NUM4,     // 'UP' arrow.
+//     TOUCH_PAD_NUM5,     // 'RIGHT' arrow.
+//     TOUCH_PAD_NUM6,     // 'LEFT' arrow.
+//     TOUCH_PAD_NUM7,     // 'DOWN' arrow.
+// };
+
 const touch_pad_t button[TOUCH_BUTTON_NUM] = {
-    TOUCH_PAD_NUM4,     // 'UP' arrow.
-    TOUCH_PAD_NUM5,     // 'RIGHT' arrow.
-    TOUCH_PAD_NUM6,     // 'LEFT' arrow.
-    TOUCH_PAD_NUM7,     // 'DOWN' arrow.
+    TOUCH_PAD_NUM1,
+    TOUCH_PAD_NUM2,
+    TOUCH_PAD_NUM3,
+    TOUCH_PAD_NUM4,
+    TOUCH_PAD_NUM5,
+    TOUCH_PAD_NUM6,
+    TOUCH_PAD_NUM7,
+    TOUCH_PAD_NUM8,
+    TOUCH_PAD_NUM9,
+    TOUCH_PAD_NUM10,
+    TOUCH_PAD_NUM11,
+    TOUCH_PAD_NUM12,
+    TOUCH_PAD_NUM13,
+    TOUCH_PAD_NUM14
 };
 
 const float button_threshold[TOUCH_BUTTON_NUM] = {
@@ -30,6 +47,16 @@ const float button_threshold[TOUCH_BUTTON_NUM] = {
     0.2, // 20%.
     0.2, // 20%.
     0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%.
+    0.2, // 20%
 };
 
 void touchsensor_interrupt_cb(void *arg)
@@ -75,7 +102,7 @@ void touchsensor_filter_set(touch_filter_mode_t mode)
     ESP_LOGI(TAG, "touch pad filter init");
 }
 
-void tp_example_read_task(void *pvParameter)
+void tp_read_task(void *pvParameter)
 {
     touch_event_t evt = {0};
     static uint8_t guard_mode_flag = 0;
@@ -120,6 +147,24 @@ void tp_example_read_task(void *pvParameter)
             ESP_LOGI(TAG, "Touch sensor channel %"PRIu32" measure timeout. Skip this exception channel!!", evt.pad_num);
             touch_pad_timeout_resume(); // Point on the next channel to measure.
         }
+    }
+}
+
+void tp_print_task(void *pvParameter)
+{
+    uint32_t touch_value;
+
+    /* Wait touch sensor init done */
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    printf("Touch Sensor read, the output format is: \nTouchpad num:[raw data]\n\n");
+
+    while (1) {
+        for (int i = 0; i < TOUCH_BUTTON_NUM; i++) {
+            touch_pad_read_raw_data(button[i], &touch_value);    // read raw data.
+            printf("T%d: [%4"PRIu32"] ", button[i], touch_value);
+        }
+        printf("\n");
+        vTaskDelay(200 / portTICK_PERIOD_MS);
     }
 }
 
