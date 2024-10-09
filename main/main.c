@@ -167,6 +167,7 @@ void app_main(void)
 
     wifi_init_sta();
 
+    // start_webserver();
     start_webserver();
 
     // Initialize button that will trigger HID reports
@@ -199,7 +200,7 @@ void app_main(void)
     ESP_LOGI(TAG, "USB initialization DONE");
 
     // Initialize UART for serial prompt
-    uart_init();
+    // uart_init();
 
     // Initialize LED driver GPIOs
     init_gpio(LED_1_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);

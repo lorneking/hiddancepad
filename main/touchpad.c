@@ -172,4 +172,11 @@ void tp_print_task(void *pvParameter)
     }
 }
 
+uint32_t tp_read(touch_pad_t pad)
+{
+    uint32_t touch_value;
+    touch_pad_read_raw_data(pad, &touch_value);
+    return touch_value;
+}
+
 #endif // PADS_USE_TOUCHPADS

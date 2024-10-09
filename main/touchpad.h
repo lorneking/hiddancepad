@@ -65,8 +65,7 @@ void tp_print_task(void *pvParameter);
 // Callback function for touch sensor interrupt handling
 void touchsensor_interrupt_cb(void *arg);
 
-// Function to initialize and start the touch pad query task
-// void touchpad_query(void);
+uint32_t tp_read(touch_pad_t pad);
 
 #ifdef __cplusplus
 }
