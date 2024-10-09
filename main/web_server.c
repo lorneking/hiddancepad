@@ -3,7 +3,6 @@
 #include "hx711.h"
 #include "config.h"
 #include "driver/gpio.h"
-// #include "esp_websocket_server.h"
 #include "pin_defs.h"
 #include "config.h"
 #include "touchpad.h"
@@ -25,7 +24,10 @@ const char* html_page = "<!DOCTYPE html>"
 "    document.getElementById('up').innerHTML = 'UP: ' + data.sensors[1];"
 "    document.getElementById('left').innerHTML = 'LEFT: ' + data.sensors[2];"
 "    document.getElementById('right').innerHTML = 'RIGHT: ' + data.sensors[3];"
-"    document.getElementById('leds').innerHTML = 'LEDs: ' + data.leds.join(', ');"
+"    document.getElementById('down-led').innerHTML = 'DOWN LED: ' + (data.leds[0] ? 'ON' : 'OFF');"
+"    document.getElementById('up-led').innerHTML = 'UP LED: ' + (data.leds[1] ? 'ON' : 'OFF');"
+"    document.getElementById('left-led').innerHTML = 'LEFT LED: ' + (data.leds[2] ? 'ON' : 'OFF');"
+"    document.getElementById('right-led').innerHTML = 'RIGHT LED: ' + (data.leds[3] ? 'ON' : 'OFF');"
 "  };"
 "  ws.onclose = function() {"
 "    console.log('WebSocket connection closed.');"
@@ -40,16 +42,13 @@ const char* html_page = "<!DOCTYPE html>"
 "<p id='up'>UP: Loading...</p>"
 "<p id='left'>LEFT: Loading...</p>"
 "<p id='right'>RIGHT: Loading...</p>"
-"<p id='leds'>LEDs: Loading...</p>"
+"<h2>LEDs</h2>"
+"<p id='down-led'>DOWN LED: Loading...</p>"
+"<p id='up-led'>UP LED: Loading...</p>"
+"<p id='left-led'>LEFT LED: Loading...</p>"
+"<p id='right-led'>RIGHT LED: Loading...</p>"
 "</body>"
 "</html>";
-
-// HTTP Server Handlers
-// esp_err_t hello_get_handler(httpd_req_t *req) {
-//     const char* resp_str = "Welcome to the DDR Dance Pad Controller!";
-//     httpd_resp_send(req, resp_str, strlen(resp_str));
-//     return ESP_OK;
-// }
 
 int led_state1 = 0, led_state2 = 0, led_state3 = 0, led_state4 = 0;
 long sensor_value1 = 0, sensor_value2 = 0, sensor_value3 = 0, sensor_value4 = 0;
@@ -58,35 +57,6 @@ esp_err_t hello_get_handler(httpd_req_t *req) {
     httpd_resp_send(req, html_page, strlen(html_page));
     return ESP_OK;
 }
-
-// static void ws_async_send(void *arg) {
-//     esp_websocket_client_handle_t ws = (esp_websocket_client_handle_t)arg;
-//     char payload[128];
-    
-//     // Create JSON payload
-//     snprintf(payload, sizeof(payload), "{\"sensors\": [%ld, %ld, %ld, %ld], \"buttons\": [%d, %d, %d, %d], \"leds\": [%d, %d, %d, %d]}",
-//             sensor_value1, sensor_value2, sensor_value3, sensor_value4,
-//             button_value1, button_value2, button_value3, button_value4,
-//             led_state1, led_state2, led_state3, led_state4);
-    
-//     esp_websocket_client_send_text(ws, payload, strlen(payload), portMAX_DELAY);
-// }
-
-// esp_err_t websocket_handler(httpd_req_t *req) {
-//     esp_websocket_client_handle_t ws = (esp_websocket_client_handle_t)req->sess_ctx;
-//     ws_async_send(ws);  // Push initial data to client
-//     return ESP_OK;
-// }
-
-// void start_websocket_server(httpd_handle_t server) {
-//     httpd_uri_t ws_uri = {
-//         .uri = "/ws",
-//         .method = HTTP_GET,
-//         .handler = websocket_handler,
-//         .user_ctx = NULL
-//     };
-//     httpd_register_uri_handler(server, &ws_uri);
-// }
 
 static void update_sensor_states() {
     sensor_value1 = tp_read(DOWN_ARROW_TOUCH);
@@ -169,9 +139,6 @@ void start_webserver(void) {
     }
 }
 
-
-
-
 #if PADS_USE_LOAD_CELLS
 
 HX711 scaleread1, scaleread2, scaleread3, scaleread4;
@@ -191,28 +158,4 @@ esp_err_t hx711_get_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 #endif
-
-// void start_webserver(void) {
-//     ESP_LOGI("WEB", "Starting webserver...");
-//     httpd_handle_t server = NULL;
-//     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
-//     if (httpd_start(&server, &config) == ESP_OK) {
-//         httpd_uri_t uri_get = {
-//             .uri      = "/",
-//             .method   = HTTP_GET,
-//             .handler  = hello_get_handler,
-//         };
-//         httpd_register_uri_handler(server, &uri_get);
-
-//         #if PADS_USE_LOAD_CELLS
-//         httpd_uri_t uri_hx711 = {
-//             .uri      = "/hx711",
-//             .method   = HTTP_GET,
-//             .handler  = hx711_get_handler,
-//         };
-//         httpd_register_uri_handler(server, &uri_hx711);
-//         #endif
-//     }
-// }
 
