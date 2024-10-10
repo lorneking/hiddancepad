@@ -43,10 +43,10 @@ const float button_threshold[TOUCH_BUTTON_NUM] = {
     0.2, // 20%. PAD 1
     0.2, // 20%. PAD 2
     0.2, // 20%. PAD 3
-    0.1, // 10%. PAD 4 - UP arrow
-    0.1, // 10%. PAD 5 - LEFT arrow
-    0.1, // 10%. PAD 6 - RIGHT arrow
-    0.1, // 10%. PAD 7 - DOWN arrow
+    0.07, // 7%. PAD 4 - UP arrow
+    0.07, // 7%. PAD 5 - LEFT arrow
+    0.07, // 7%. PAD 6 - RIGHT arrow
+    0.07, // 7%. PAD 7 - DOWN arrow
     0.2, // 20%. PAD 8
     0.2, // 20%. PAD 9
     0.2, // 20%. PAD 10
