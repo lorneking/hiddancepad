@@ -291,7 +291,7 @@ void app_main(void)
     // xTaskCreate(&tp_print_task, "touch_pad_print_task", 4096, NULL, 5, NULL);
 
     // Start sound reaction task
-    xTaskCreate(&sound_detection_task, "sound_detection_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&sound_detection_task, "sound_detection_task", 4096, NULL, 5, NULL);
 
 
 }
