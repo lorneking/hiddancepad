@@ -1,0 +1,69 @@
+# Ignore build output directories
+/build/
+/*.bin
+/*.elf
+/*.map
+
+# Ignore SDK configuration files
+/sdkconfig
+/sdkconfig.defaults
+/sdkconfig.old
+
+# Ignore IDF Python environment
+/venv/
+/.venv/
+
+# Ignore Eclipse IDE files
+/.cproject
+/.project
+/.settings/
+
+# Ignore VS Code files
+.vscode/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+*.swp
+*.swo
+*.bak
+
+# Ignore core dumps
+core
+
+# Ignore kicad backups
+/kicad/hiddancepad/hiddancepad-backups/
+
+# Ignore calibration data
+/calibration_data/
+
+# Ignore sensitive information
+main/wifi_credentials.h
+
+# Ignore dependency management files
+/dependencies.lock
+
+# Ignore CMake files
+/CMakeCache.txt
+/CMakeFiles/
+/cmake_install.cmake
+
+# Ignore Ninja build files
+/build.ninja
+/.ninja_deps
+/.ninja_log
+
+# Ignore other build system files
+/compile_commands.json
+
+# Ignore pytest cache
+/.pytest_cache/
+
+# Ignore ceedling build artifacts
+/managed_components/espressif__tinyusb/test/unit-test/vendor/ceedling/build/
