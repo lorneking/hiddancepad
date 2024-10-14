@@ -8,6 +8,8 @@
 
 esp_err_t hello_get_handler(httpd_req_t *req);
 esp_err_t hx711_get_handler(httpd_req_t *req);
+esp_err_t ws_handler(httpd_req_t *req);
+void start_websocket_server(httpd_handle_t server);
 void start_webserver(void);
 
 #endif // WEB_SERVER_H

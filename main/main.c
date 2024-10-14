@@ -18,6 +18,8 @@
 #include "touchpad.h"
 #include "config.h"
 #include "pin_defs.h"
+#include "sound_reactive.h"
+#include "esp_dsp.h"
 
 // #define APP_BUTTON (GPIO_NUM_0) // Use BOOT signal by default
 static const char *TAG = "MAIN";
@@ -167,6 +169,7 @@ void app_main(void)
 
     wifi_init_sta();
 
+    // start_webserver();
     start_webserver();
 
     // Initialize button that will trigger HID reports
@@ -199,13 +202,23 @@ void app_main(void)
     ESP_LOGI(TAG, "USB initialization DONE");
 
     // Initialize UART for serial prompt
-    uart_init();
+    // uart_init();
 
     // Initialize LED driver GPIOs
     init_gpio(LED_1_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
     init_gpio(LED_2_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
     init_gpio(LED_3_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
     init_gpio(LED_4_GATE, GPIO_MODE_OUTPUT, GPIO_PULLUP_ONLY);
+
+    // Initialize I2S
+    i2s_init();
+
+    // Initialize DSP FFT module
+    esp_err_t ret_dsperr = dsps_fft2r_init_fc32(NULL, I2S_DMA_BUF_LEN);
+    if (ret_dsperr != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize FFT. Error = %d", ret);
+        return;
+    }
 
     // Initialize HX711 task to read load cell values
     // xTaskCreate(&hx711_task, "hx711_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
@@ -271,10 +284,14 @@ void app_main(void)
     /* Enable touch sensor clock. Work mode is "timer trigger". */
     touch_pad_set_fsm_mode(TOUCH_FSM_MODE_TIMER);
     touch_pad_fsm_start();
+    vTaskDelay(50 / portTICK_PERIOD_MS); // Allow time for sensor initilization before starting touch task
 
     // Start a task to show what pads have been touched
     xTaskCreate(&tp_read_task, "touch_pad_read_task", 4096, NULL, 5, NULL);
     // xTaskCreate(&tp_print_task, "touch_pad_print_task", 4096, NULL, 5, NULL);
+
+    // Start sound reaction task
+    // xTaskCreate(&sound_detection_task, "sound_detection_task", 4096, NULL, 5, NULL);
 
 
 }

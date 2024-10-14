@@ -29,9 +29,9 @@ void end_hid_keypress (uint8_t keycode) {
 uint8_t pad_to_keycode(uint32_t pad_value) {
     switch (pad_value) {
         case 0x4: return 0x52;
-        case 0x5: return 0x51;
-        case 0x6: return 0x50;
-        case 0x7: return 0x4f;
+        case 0x5: return 0x50;
+        case 0x6: return 0x4f;
+        case 0x7: return 0x51;
         default: return 0xff; // Return an invalid keypress if no match
     }
 }

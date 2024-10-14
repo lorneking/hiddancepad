@@ -43,10 +43,10 @@ const float button_threshold[TOUCH_BUTTON_NUM] = {
     0.2, // 20%. PAD 1
     0.2, // 20%. PAD 2
     0.2, // 20%. PAD 3
-    0.1, // 10%. PAD 4 - UP arrow
-    0.1, // 10%. PAD 5 - LEFT arrow
-    0.1, // 10%. PAD 6 - RIGHT arrow
-    0.1, // 10%. PAD 7 - DOWN arrow
+    0.055, // 5.5%. PAD 4
+    0.05, // 5.5%. PAD 5
+    0.05, // 5.5%. PAD 6
+    0.05, // 6.0%. PAD 7
     0.2, // 20%. PAD 8
     0.2, // 20%. PAD 9
     0.2, // 20%. PAD 10
@@ -103,8 +103,8 @@ void tp_read_task(void *pvParameter)
 {
     touch_event_t evt = {0};
     static uint8_t guard_mode_flag = 0;
-    /* Wait touch sensor init done */
-    vTaskDelay(50 / portTICK_PERIOD_MS);
+
+    // vTaskDelay(50 / portTICK_PERIOD_MS);
     tp_set_thresholds();
 
     while (1) {
@@ -170,6 +170,13 @@ void tp_print_task(void *pvParameter)
         printf("\n");
         vTaskDelay(200 / portTICK_PERIOD_MS);
     }
+}
+
+uint32_t tp_read(touch_pad_t pad)
+{
+    uint32_t touch_value;
+    touch_pad_read_raw_data(pad, &touch_value);
+    return touch_value;
 }
 
 #endif // PADS_USE_TOUCHPADS
