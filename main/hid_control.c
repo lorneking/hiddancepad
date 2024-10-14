@@ -11,7 +11,7 @@ void send_hid_keypress(uint8_t keycode) {
     ESP_LOGI(TAG, "Sending Keyboard report 0x%02X", keycode);
     uint8_t keycode_buf[6] = {keycode};
     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, keycode_buf);
-    vTaskDelay(pdMS_TO_TICKS(13));
+    // vTaskDelay(pdMS_TO_TICKS(13));
     tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
 }
 
@@ -32,6 +32,6 @@ uint8_t pad_to_keycode(uint32_t pad_value) {
         case 0x5: return 0x50;
         case 0x6: return 0x4f;
         case 0x7: return 0x51;
-        default: return 0xff; // Return an invalid keypress if no match
+        default: return 0x00; // Return an invalid keypress if no match
     }
 }

@@ -43,7 +43,7 @@ const float button_threshold[TOUCH_BUTTON_NUM] = {
     0.2, // 20%. PAD 1
     0.2, // 20%. PAD 2
     0.2, // 20%. PAD 3
-    0.055, // 5.5%. PAD 4
+    0.05, // 5.5%. PAD 4
     0.05, // 5.5%. PAD 5
     0.05, // 5.5%. PAD 6
     0.05, // 6.0%. PAD 7
@@ -105,7 +105,7 @@ void tp_read_task(void *pvParameter)
     static uint8_t guard_mode_flag = 0;
 
     // vTaskDelay(50 / portTICK_PERIOD_MS);
-    tp_set_thresholds();
+    // tp_set_thresholds();
 
     while (1) {
         int ret = xQueueReceive(que_touch, &evt, (TickType_t)portMAX_DELAY);

@@ -284,14 +284,19 @@ void app_main(void)
     /* Enable touch sensor clock. Work mode is "timer trigger". */
     touch_pad_set_fsm_mode(TOUCH_FSM_MODE_TIMER);
     touch_pad_fsm_start();
+    
     vTaskDelay(50 / portTICK_PERIOD_MS); // Allow time for sensor initilization before starting touch task
 
+    tp_set_thresholds(); // Set the thresholds after the delay, or they won't set properly.
+    
     // Start a task to show what pads have been touched
-    xTaskCreate(&tp_read_task, "touch_pad_read_task", 4096, NULL, 5, NULL);
+    // xTaskCreate(&tp_read_task, "touch_pad_read_task", 4096, NULL, 5, NULL);
+    xTaskCreate(&tp_read_task, "touch_pad_read_task", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
     // xTaskCreate(&tp_print_task, "touch_pad_print_task", 4096, NULL, 5, NULL);
 
     // Start sound reaction task
     // xTaskCreate(&sound_detection_task, "sound_detection_task", 4096, NULL, 5, NULL);
 
+    esp_log_level_set("*", ESP_LOG_ERROR);
 
 }
