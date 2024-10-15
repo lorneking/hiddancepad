@@ -45,8 +45,8 @@ const float button_threshold[TOUCH_BUTTON_NUM] = {
     0.2, // 20%. PAD 3
     0.05, // 5.5%. PAD 4
     0.05, // 5.5%. PAD 5
-    0.05, // 5.5%. PAD 6
-    0.05, // 6.0%. PAD 7
+    0.055, // 5.5%. PAD 6
+    0.055, // 6.0%. PAD 7
     0.2, // 20%. PAD 8
     0.2, // 20%. PAD 9
     0.2, // 20%. PAD 10

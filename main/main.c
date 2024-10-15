@@ -46,10 +46,10 @@ const uint8_t hid_report_descriptor[] = {
 const char* hid_string_descriptor[5] = {
     // array of pointer to string descriptors
     (char[]){0x09, 0x04},  // 0: is supported language is English (0x0409)
-    "TinyUSB",             // 1: Manufacturer
-    "TinyUSB Device",      // 2: Product
-    "123456",              // 3: Serials, should use chip ID
-    "Example HID interface",  // 4: HID
+    "LK",             // 1: Manufacturer
+    "hiddancepad",      // 2: Product
+    "000001",              // 3: Serials, should use chip ID
+    "hiddancepad",  // 4: HID
 };
 
 /**
